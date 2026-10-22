@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>The Bakery Club</title>
+
+    <!-- Bootstrap for design -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Handwritten font -->
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- PyScript -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.8.2/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.8.2/core.js"></script>
+
+    <style>
+        /* Colors used on the page */
+        :root {
+            --cream: #fdecc8;
+            --olive: #c8935f;
+            --blue: #b9d6e0;
+            --red: #c0392b;
+            --brown: #3b1f14;
+        }
+
+        /* Striped background (olive + light blue) */
+        body {
+            font-family: "Gaegu", cursive;
+            font-size: 1.2rem;
+            color: var(--brown);
+            min-height: 100vh;
+            background-color: #f6f5f1;
+            /* Pale blue and off-white stripes with dotted lines between them */
+            background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='6'><rect width='25' height='6' fill='%23dce6f3'/><rect x='25' width='25' height='6' fill='%23f6f5f1'/><rect x='24' width='1.5' height='3' fill='%234a3b36'/><rect x='48.5' width='1.5' height='3' fill='%234a3b36'/></svg>");
+        }
+
+        /* Cream top bar with the club name */
+        .top-bar {
+            background-color: var(--cream);
+            padding: 14px 24px;
+        }
+
+        .logo {
+            color: var(--red);
+            font-weight: 700;
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        /* Red dashed line under the top bar */
+        .red-border {
+            height: 8px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--red) 0px,
+                var(--red) 8px,
+                transparent 8px,
+                transparent 16px
+            );
+        }
+
+        /* Cream card in the middle */
+        .card-box {
+            background-color: var(--cream);
+            max-width: 460px;
+            padding: 30px;
+            margin: 50px auto;
+        }
+
+        .card-box h2 {
+            text-align: center;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        /* Inputs with only a bottom line */
+        .line-input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--brown);
+            border-radius: 0;
+            font-family: "Gaegu", cursive;
+            font-size: 1.2rem;
+            margin-bottom: 14px;
+        }
+
+        .line-input:focus {
+            background: transparent;
+            box-shadow: none;
+            border-bottom-color: var(--red);
+        }
+
+        /* Outlined button */
+        .join-btn {
+            display: block;
+            margin: 10px auto 20px auto;
+            background: transparent;
+            border: 2px solid var(--brown);
+            border-radius: 8px;
+            padding: 2px 22px;
+            font-family: "Gaegu", cursive;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--brown);
+        }
+
+        .join-btn:hover {
+            background-color: var(--red);
+            border-color: var(--red);
+            color: var(--cream);
+        }
+
+        /* Member list pops up when you press join */
+        #output {
+            animation: pop 0.3s ease-out;
+        }
+
+        @keyframes pop {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        #output ul {
+            padding-left: 22px;
+        }
+
+        .total {
+            font-weight: 700;
+            color: var(--red);
+        }
+    </style>
+</head>
+<body>
+    <!-- Top bar -->
+    <div class="top-bar">
+        <h1 class="logo">the bakery club</h1>
+    </div>
+    <div class="red-border"></div>
+
+    <!-- Card -->
+    <div class="card-box">
+        <h2>join the club!</h2>
+
+        <!-- Two text boxes for first name and last name -->
+        <input type="text" id="first_name" class="form-control line-input" placeholder="first name">
+        <input type="text" id="last_name" class="form-control line-input" placeholder="last name">
+
+        <!-- Button that triggers the PyScript function -->
+        <button id="join_btn" class="join-btn" type="button" py-click="add_member">join</button>
+
+        <!-- Results are shown here -->
+        <div id="output"></div>
+    </div>
+
+    <script type="py">
+        # ============================================================
+        # HOW THIS PROGRAM WORKS (in simple words):
+        # 1. We make 4 small groups (sets) of names, one for each grade.
+        # 2. We join the 4 groups into one big group called "master".
+        # 3. When someone types a name and presses "join", the name is
+        #    added to the big group and the whole list is shown.
+        # ============================================================
+
+        # "document" lets Python talk to the web page (text boxes, etc.)
+        from pyscript import document
+
+        # --- The 4 groups (sets) of names, one per grade level ---
+        grade_7 = {"Xyrinne Nuesca", "Oslyn Donato"}
+        grade_8 = {"Francesca Ariola", "Andreanna Bautista"}
+        grade_9 = {"Ayanokoji Kiyotaka", "Jhanella Palomares"}
+        grade_10 = {"Yohannah Bacoy", "Ryoni Guilas"}
+
+        # The | sign means "union": it joins all the groups into one big
+        # group. A set never keeps the same name twice.
+        master = grade_7 | grade_8 | grade_9 | grade_10
+
+
+        # This function shows the list of members on the page
+        def show_results():
+            # sorted() puts the names in A-Z order.
+            # We put each name inside <li> ... </li> so it shows as a list.
+            all_members = "<li>" + "</li><li>".join(sorted(master)) + "</li>"
+
+            # len() counts how many names are in the group.
+            # The f-string puts the names and the count into the text.
+            # innerHTML puts that text inside the red box on the page.
+            document.querySelector("#output").innerHTML = (
+                f"<p>the bakery club members:</p>"
+                f"<ul>{all_members}</ul>"
+                f"<p class='total'>total members: {len(master)}</p>"
+            )
+
+
+        # This function runs when the "join" button is clicked
+        # (the button has py-click="add_member" in the HTML above)
+        def add_member(event):
+            # "global" means we change the big group made earlier
+            global master
+
+            # Get what the person typed in the two text boxes
+            first = document.querySelector("#first_name").value
+            last = document.querySelector("#last_name").value
+
+            # Make a tiny group with just the new member.
+            # strip() removes extra spaces at the start and end.
+            new_member = {f"{first} {last}".strip()}
+
+            # Union (|): add the new member to the big group
+            master = master | new_member
+
+            # Difference (-): remove an empty name if the boxes were blank
+            master = master - {""}
+
+            # Show the updated list on the page
+            show_results()
+
+            # Empty the two text boxes so the next name can be typed
+            document.querySelector("#first_name").value = ""
+            document.querySelector("#last_name").value = ""
+    </script>
+</body>
+</html>
